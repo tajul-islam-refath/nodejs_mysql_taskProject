@@ -1,5 +1,6 @@
-const db = require("../db/db");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("../db/db");
 const insertDataService = require("../services/common/insertDataService");
 const findSingleDataService = require("../services/common/findSingleDataService");
 
@@ -47,9 +48,19 @@ exports.login = async (req, res) => {
       });
     }
 
+    user[0].password = undefined;
+    let token = jwt.sign(
+      {
+        data: user[0].email,
+        exp: Math.floor(Date.now() / 1000) + (60 * 60),
+      },
+      "token12345"
+    );
+
     res.status(200).json({
       status: "success",
       data: user,
+      token: token,
     });
   } catch (error) {
     res.status(404).json({
@@ -61,7 +72,7 @@ exports.login = async (req, res) => {
 
 exports.getUserDetails = async (req, res) => {
   try {
-    let email = req.params.email;
+    let email = req.headers["email"];
 
     const query = "SELECT id, email, username FROM ?? WHERE ?? = ?";
     const data = ["users", "email", email];
